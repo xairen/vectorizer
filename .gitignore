@@ -1,0 +1,4 @@
+venv
+test.csv
+/Frontend/node_modules
+/Backend/venv
