@@ -1,0 +1,14 @@
+services:
+  backend:
+    build: ./Backend
+    ports:
+      - "5001:5001"
+
+  frontend:
+    build: ./Frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    environment:
+      - REACT_APP_API_URL=http://localhost:5001

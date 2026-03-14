@@ -2,3 +2,5 @@ venv
 test.csv
 /Frontend/node_modules
 /Backend/venv
+/Frontend/.env
+/Frontend/build

@@ -8,6 +8,7 @@ app = Flask(__name__)
 CORS(app)
 
 vectorized_data = None
+uploaded_data = None
 uploaded_filename = ""
 
 @app.route('/')
@@ -16,27 +17,31 @@ def index():
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
-    global uploaded_filename
+    global uploaded_filename, uploaded_data
     file = request.files['file']
-    uploaded_filename = file.filename  # Store the uploaded file name
+    uploaded_filename = file.filename
     if file.filename.endswith('.csv'):
         df = pd.read_csv(file)
     elif file.filename.endswith('.parquet'):
         df = pd.read_parquet(file)
     else:
         return jsonify({'error': 'Unsupported file format'}), 400
+    uploaded_data = df
     return jsonify({'columns': df.columns.tolist()})
 
 @app.route('/vectorize', methods=['POST'])
 def vectorize():
-    global vectorized_data
+    global vectorized_data, uploaded_data
     data = request.json
     column = data['column']
-    df = pd.DataFrame(data['data'])
+    if uploaded_data is None:
+        return jsonify({'error': 'No file uploaded. Please upload a file first.'}), 400
+    df = uploaded_data.copy()
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
     model = BertModel.from_pretrained('bert-base-uncased')
 
-    inputs = tokenizer(df[column].tolist(), return_tensors='pt', padding=True, truncation=True)
+    texts = df[column].fillna('').astype(str).tolist()
+    inputs = tokenizer(texts, return_tensors='pt', padding=True, truncation=True)
     outputs = model(**inputs)
     vectors = outputs.last_hidden_state.mean(dim=1).tolist()
 
